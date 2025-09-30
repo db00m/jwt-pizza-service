@@ -34,10 +34,7 @@ const createFranchise = async () => {
   const createRes = await request(app).post('/api/franchise').set({ Authorization: `Bearer ${authToken}` }).send(franchise)
   expect(createRes.status).toBe(200)
 
-  let result = createRes.body;
-  delete result.id;
-
-  return result;
+  return createRes.body;
 }
 
 test('createFranchise', async () => {
@@ -52,15 +49,30 @@ test('getFranchises', async () => {
   await createFranchise();
   await createFranchise();
 
-  const response = await request(app).get(`/api/franchise`).set({ Authorization: `Bearer ${authToken}` })
+  const response = await request(app).get('/api/franchise').set({ Authorization: `Bearer ${authToken}` })
   expect(response.status).toBe(200);
 
   expect(response.body.franchises.length).toBeGreaterThanOrEqual(3);
 })
 
-// TODO getUserFranchises
+test('getUserFranchises', async () => {
+  await createFranchise();
+  await createFranchise();
+  await createFranchise();
 
-// TODO deleteFranchise
+  const response = await request(app).get(`/api/franchise/${testFranchisee.id}`).set({ Authorization: `Bearer ${authToken}` });
+  expect(response.status).toBe(200);
+
+  expect(response.body.length).toBeGreaterThanOrEqual(3);
+})
+
+test('deleteFranchise', async () => {
+  const franchise = await createFranchise();
+
+  const response = await request(app).delete(`/api/franchise/${franchise.id}`).set({ Authorization: `Bearer ${authToken}` });
+  expect(response.status).toBe(200);
+  expect(response.body.message).toBe(`franchise deleted`);
+})
 
 // TODO createStore
 
