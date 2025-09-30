@@ -5,7 +5,6 @@ const {registerDiner, registerAdmin, createStore, createFranchise} = require("..
 
 let testAdminAuthToken;
 let testDinerAuthToken;
-let testAdmin;
 let testDiner;
 
 beforeAll(async () => {
@@ -13,9 +12,8 @@ beforeAll(async () => {
   testDinerAuthToken = dinerAuthToken;
   testDiner = diner;
 
-  const { admin, adminAuthToken } = await registerAdmin();
+  const { adminAuthToken } = await registerAdmin();
   testAdminAuthToken = adminAuthToken;
-  testAdmin = admin;
 })
 
 afterAll(async () => {
