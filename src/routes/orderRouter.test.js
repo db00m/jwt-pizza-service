@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../service');
 const {Role, DB} = require("../database/database");
-const { registerAdmin, generateRandomString} = require('../testing/testUtils');
+const { registerAdmin, generateRandomString, createFranchise, createStore} = require('../testing/testUtils');
 
 let testAuthToken;
 let testAdmin;
@@ -30,15 +30,31 @@ const createMenuItem = async () => {
   return { responseBody, testMenuItem };
 }
 
+const createOrder = async (menuItems) => {
+  const testFranchise = await createFranchise(testAdmin, testAuthToken);
+  const testStore = await createStore(testFranchise, testAuthToken);
+  let order = {
+    franchiseId: testFranchise.id,
+    storeId: testStore.id,
+    items: menuItems
+  }
+
+  const response = await request(app).post('/api/order')
+    .set({ Authorization: `Bearer ${testAuthToken}` })
+    .send(order);
+
+  expect(response.status).toBe(200);
+
+  return response.body.order;
+}
+
 test('getMenu', async () => {
   const { testMenuItem } = await createMenuItem();
 
   const response = await request(app).get('/api/order/menu').set({ Authorization: `Bearer ${testAuthToken}` });
   expect(response.status).toBe(200);
 
-  const result = response.body;
-
-  expect(result).toEqual(
+  expect(response.body).toEqual(
     expect.arrayContaining([
       expect.objectContaining(testMenuItem)
     ])
@@ -54,3 +70,26 @@ test('createMenuItem', async () => {
     ])
   );
 });
+
+test('createOrder', async () => {
+  const { responseBody } = await createMenuItem();
+  const testMenuItem = responseBody[0];
+  testMenuItem.menuId = testMenuItem.id;
+
+  const resultOrder = await createOrder([testMenuItem]);
+
+  expect(resultOrder).toMatchObject({
+    franchiseId: expect.any(Number),
+    storeId: expect.any(Number),
+    items: expect.arrayContaining([
+      expect.objectContaining({
+        id: expect.any(Number),
+        menuId: expect.any(Number),
+        title: expect.any(String),
+        description: expect.any(String),
+        image: expect.any(String),
+        price: expect.any(Number),
+      }),
+    ]),
+  });
+})

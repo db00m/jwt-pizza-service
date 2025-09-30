@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../service');
 const { DB } = require('../database/database.js');
-const {registerDiner, registerAdmin} = require("../testing/testUtils");
+const {registerDiner, registerAdmin, createStore, createFranchise} = require("../testing/testUtils");
 
 let testAdminAuthToken;
 let testDinerAuthToken;
@@ -25,37 +25,17 @@ afterAll(async () => {
   }
 })
 
-const createFranchise = async () => {
-  const franchise = { name: Math.random().toString(36).substring(2, 12), admins: [testDiner] }
-
-  const createRes = await request(app).post('/api/franchise').set({ Authorization: `Bearer ${testAdminAuthToken}` }).send(franchise)
-  expect(createRes.status).toBe(200)
-
-  return createRes.body;
-}
-
-const createStore =  async (franchise) => {
-  const store = { franchiseId: franchise.id, name: Math.random().toString(36).substring(2, 12) };
-
-  const response = await request(app).post(`/api/franchise/${franchise.id}/store`)
-    .set({ Authorization: `Bearer ${testAdminAuthToken}` })
-    .send(store);
-  expect(response.status).toBe(200);
-
-  return response.body;
-}
-
 test('createFranchise', async () => {
-  let result = await createFranchise();
+  let result = await createFranchise(testDiner, testAdminAuthToken);
   delete result.id;
 
   expect(result.admins).toEqual([testDiner]);
 });
 
 test('getFranchises', async () => {
-  await createFranchise();
-  await createFranchise();
-  await createFranchise();
+  await createFranchise(testDiner, testAdminAuthToken);
+  await createFranchise(testDiner, testAdminAuthToken);
+  await createFranchise(testDiner, testAdminAuthToken);
 
   const response = await request(app).get('/api/franchise').set({ Authorization: `Bearer ${testDinerAuthToken}` })
   expect(response.status).toBe(200);
@@ -64,9 +44,9 @@ test('getFranchises', async () => {
 })
 
 test('getUserFranchises', async () => {
-  await createFranchise();
-  await createFranchise();
-  await createFranchise();
+  await createFranchise(testDiner, testAdminAuthToken);
+  await createFranchise(testDiner, testAdminAuthToken);
+  await createFranchise(testDiner, testAdminAuthToken);
 
   const response = await request(app).get(`/api/franchise/${testDiner.id}`).set({ Authorization: `Bearer ${testAdminAuthToken}` });
   expect(response.status).toBe(200);
@@ -75,7 +55,7 @@ test('getUserFranchises', async () => {
 })
 
 test('deleteFranchise', async () => {
-  const franchise = await createFranchise();
+  const franchise = await createFranchise(testDiner, testAdminAuthToken);
 
   const response = await request(app).delete(`/api/franchise/${franchise.id}`).set({ Authorization: `Bearer ${testAdminAuthToken}` });
   expect(response.status).toBe(200);
@@ -83,8 +63,8 @@ test('deleteFranchise', async () => {
 })
 
 test('createStore', async () => {
-  const franchise = await createFranchise();
-  const store = await createStore(franchise);
+  const franchise = await createFranchise(testDiner, testAdminAuthToken);
+  const store = await createStore(franchise, testAdminAuthToken);
 
   expect(store).toEqual(expect.objectContaining({
     franchiseId: franchise.id,
@@ -94,8 +74,8 @@ test('createStore', async () => {
 })
 
 test('deleteStore', async () => {
-  const franchise = await createFranchise();
-  const store = await createStore(franchise);
+  const franchise = await createFranchise(testDiner, testAdminAuthToken);
+  const store = await createStore(franchise, testAdminAuthToken);
 
   const deleteResponse = await request(app).delete(`/api/franchise/${franchise.id}/store/${store.id}`).set({ Authorization: `Bearer ${testAdminAuthToken}` });
   expect(deleteResponse.status).toBe(200);

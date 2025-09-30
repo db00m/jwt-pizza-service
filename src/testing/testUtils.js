@@ -32,6 +32,26 @@ const registerAdmin = async () => {
   return { admin, adminAuthToken }
 }
 
+const createStore = async (franchise, authToken) => {
+  let store = { franchiseId: franchise.id, name: generateRandomString() + 'test store' };
+
+  const response = await request(app).post(`/api/franchise/${franchise.id}/store`)
+    .set({ Authorization: `Bearer ${authToken}` })
+    .send(store);
+  expect(response.status).toBe(200);
+
+  return response.body;
+}
+
+const createFranchise = async (admin, authToken) => {
+  const franchise = { name: generateRandomString() + 'test franchise', admins: [admin] }
+
+  const createRes = await request(app).post('/api/franchise').set({ Authorization: `Bearer ${authToken}` }).send(franchise)
+  expect(createRes.status).toBe(200)
+
+  return createRes.body;
+}
 
 
-module.exports = { registerDiner, registerAdmin, generateRandomString };
+
+module.exports = { registerDiner, registerAdmin, generateRandomString, createFranchise, createStore };
