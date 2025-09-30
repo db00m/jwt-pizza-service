@@ -12,26 +12,7 @@ beforeAll(async () => {
   testAdmin = admin;
 })
 
-test('getMenu', async () => {
-  const response = await request(app).get('/api/order/menu').set({ Authorization: `Bearer ${testAuthToken}` });
-  expect(response.status).toBe(200);
-
-  const result = response.body;
-
-  expect(result).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        id: expect.any(Number),
-        title: expect.any(String),
-        image: expect.any(String),
-        price: expect.any(Number),
-        description: expect.any(String),
-      })
-    ])
-  )
-})
-
-test('createMenuItem', async () => {
+const createMenuItem = async () => {
   const testMenuItem = {
     title: generateRandomString() + ' test item',
     image: 'pizza1.png',
@@ -44,8 +25,32 @@ test('createMenuItem', async () => {
     .send(testMenuItem);
 
   expect(response.status).toBe(200);
-  expect(response.body).toEqual(expect.arrayContaining([
-    expect.objectContaining(testMenuItem)
-  ])
+  const responseBody = response.body;
+
+  return { responseBody, testMenuItem };
+}
+
+test('getMenu', async () => {
+  const { testMenuItem } = await createMenuItem();
+
+  const response = await request(app).get('/api/order/menu').set({ Authorization: `Bearer ${testAuthToken}` });
+  expect(response.status).toBe(200);
+
+  const result = response.body;
+
+  expect(result).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining(testMenuItem)
+    ])
   );
-})
+});
+
+test('createMenuItem', async () => {
+  const { responseBody, testMenuItem } = await createMenuItem()
+
+  expect(responseBody).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining(testMenuItem)
+    ])
+  );
+});
