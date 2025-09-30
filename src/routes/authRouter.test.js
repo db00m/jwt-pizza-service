@@ -4,9 +4,7 @@ const app = require('../service');
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
 
-jest.setTimeout(60 * 1000 * 5); // 5 minutes
-
-const loginUser = async (user) => {
+const loginUser = async () => {
   const loginRes = await request(app).put('/api/auth').send(testUser);
   expect(loginRes.status).toBe(200);
 
