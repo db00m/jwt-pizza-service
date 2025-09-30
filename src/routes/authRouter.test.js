@@ -1,35 +1,32 @@
 const request = require('supertest');
 const app = require('../service');
+const { registerDiner } = require('../testing/testUtils');
 
-const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
+let testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
 
-const loginUser = async () => {
-  const loginRes = await request(app).put('/api/auth').send(testUser);
-  expect(loginRes.status).toBe(200);
-
-  return loginRes.body;
-}
-
 beforeAll(async () => {
-    testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
-    const registerRes = await request(app).post('/api/auth').send(testUser);
-    testUserAuthToken = registerRes.body.token;
-    expectValidJwt(testUserAuthToken);
+    const { diner, dinerAuthToken } = await registerDiner();
+    testUserAuthToken = dinerAuthToken;
+    testUser = diner;
+    expectValidJwt(dinerAuthToken);
 });
 
 test('login', async () => {
-    const responseBody = await loginUser(testUser);
-    expectValidJwt(responseBody.token);
+    const response = await request(app).put('/api/auth').send(testUser);
+
+    expect(response.status).toBe(200);
+    expectValidJwt(response.body.token);
+
+    const responseUser = response.body.user;
 
     const expectedUser = { ...testUser, roles: [{ role: 'diner' }] };
     delete expectedUser.password;
-    expect(responseBody.user).toMatchObject(expectedUser);
+    expect(responseUser).toMatchObject(expectedUser);
 });
 
 test('logout', async () => {
-  const loginBody = await loginUser(testUser);
-  const logoutRes = await request(app).delete('/api/auth').set({Authorization: `Bearer ${loginBody.token}`}).send(testUser);
+  const logoutRes = await request(app).delete('/api/auth').set({Authorization: `Bearer ${testUserAuthToken}`}).send(testUser);
   expect(logoutRes.status).toBe(200);
 
   expect(logoutRes.body.message).toEqual('logout successful');
