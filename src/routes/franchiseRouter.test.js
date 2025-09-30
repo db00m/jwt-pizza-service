@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../service');
 const { Role, DB } = require('../database/database.js');
+const {response} = require("express");
 
 let authToken = "fakeauth";
 let testAdmin = { name: 'admin', email: 'reg@test.com', password: 'a' };
@@ -35,6 +36,17 @@ const createFranchise = async () => {
   expect(createRes.status).toBe(200)
 
   return createRes.body;
+}
+
+const createStore =  async (franchise) => {
+  const store = { franchiseId: franchise.id, name: Math.random().toString(36).substring(2, 12) };
+
+  const response = await request(app).post(`/api/franchise/${franchise.id}/store`)
+    .set({ Authorization: `Bearer ${authToken}` })
+    .send(store);
+  expect(response.status).toBe(200);
+
+  return response.body;
 }
 
 test('createFranchise', async () => {
@@ -74,7 +86,23 @@ test('deleteFranchise', async () => {
   expect(response.body.message).toBe(`franchise deleted`);
 })
 
-// TODO createStore
+test('createStore', async () => {
+  const franchise = await createFranchise();
+  const store = await createStore(franchise);
 
-// TODO deleteStore
+  expect(store).toEqual(expect.objectContaining({
+    franchiseId: franchise.id,
+    name: expect.any(String),
+    id: expect.any(Number)
+  }))
+})
+
+test('deleteStore', async () => {
+  const franchise = await createFranchise();
+  const store = await createStore(franchise);
+
+  const deleteResponse = await request(app).delete(`/api/franchise/${franchise.id}/store/${store.id}`).set({ Authorization: `Bearer ${authToken}` });
+  expect(deleteResponse.status).toBe(200);
+  expect(deleteResponse.body.message).toBe(`store deleted`);
+})
 
