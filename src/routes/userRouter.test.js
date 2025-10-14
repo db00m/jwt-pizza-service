@@ -3,12 +3,10 @@ const app = require('../service');
 const {registerAdmin} = require("../testing/testUtils");
 
 let testAuthToken;
-let testAdmin;
 
 beforeAll(async () => {
-  const { admin, adminAuthToken } = await registerAdmin();
+  const { adminAuthToken } = await registerAdmin();
   testAuthToken = adminAuthToken;
-  testAdmin = admin;
 })
 
 test('list users unauthorized', async () => {
