@@ -55,13 +55,14 @@ class DB {
     }
   }
 
-  async getUsers(page = 0, limit = 10) {
+  async getUsers(page = 0, limit = 10, nameFilter="*") {
     const connection = await this.getConnection();
 
     const offset = page * limit;
+    nameFilter = nameFilter.replace(/\*/g, '%');
 
     try {
-      let users = await this.query(connection, `SELECT id, email, name FROM user LIMIT ${limit + 1} OFFSET ${offset}`);
+      let users = await this.query(connection, `SELECT id, email, name FROM user WHERE name LIKE ? LIMIT ${limit + 1} OFFSET ${offset}`, [nameFilter]);
 
       for (let i = 0; i < users.length; i++) {
         const user = users[i];

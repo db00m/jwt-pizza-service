@@ -51,7 +51,7 @@ userRouter.get(
       throw new StatusCodeError('unable to list users', 403);
     }
 
-    const [users, more] = await DB.getUsers()
+    const [users, more] = await DB.getUsers(req.query.page, req.query.limit, req.query.name)
 
     res.json({ users, more });
   })
