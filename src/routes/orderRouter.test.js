@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const { registerAdmin, generateRandomString, createFranchise, createStore} = require('../testing/testUtils');
+const { registerAdmin, generateRandomString, createFranchise, createStore } = require('../testing/testUtils');
 
 let testAuthToken;
 let testAdmin;
