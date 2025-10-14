@@ -40,6 +40,14 @@ userRouter.docs = [
     example: `curl -X PUT localhost:3000/api/user/1 -d '{"name":"常用名字", "email":"a@jwt.com", "password":"admin"}' -H 'Content-Type: application/json' -H 'Authorization: Bearer tttttt'`,
     response: { user: { id: 1, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'tttttt' },
   },
+  {
+    method: 'DELETE',
+    path: '/api/user/:userId',
+    requiresAuth: true,
+    description: 'Delete user',
+    example: `curl -X DELETE localhost:3000/api/user/1 -H 'Authorization: Bearer ttttttttt'`,
+    response: { message: 'user deleted' },
+  }
 ];
 
 // listUsers
@@ -81,6 +89,18 @@ userRouter.put(
     const updatedUser = await DB.updateUser(userId, name, email, password);
     const auth = await setAuth(updatedUser);
     res.json({ user: updatedUser, token: auth });
+  })
+);
+
+userRouter.delete(
+  '/:userId',
+  authRouter.authenticateToken,
+  asyncHandler(async (req, res) => {
+
+    const userId = Number(req.params.userId);
+
+    await DB.deleteUser(userId);
+    return res.status(200).json({ message: 'user deleted' });
   })
 );
 
