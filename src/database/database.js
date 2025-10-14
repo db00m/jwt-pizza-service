@@ -55,7 +55,7 @@ class DB {
     }
   }
 
-  async getUsers(authUser, page = 0, limit = 10) {
+  async getUsers(page = 0, limit = 10) {
     const connection = await this.getConnection();
 
     const offset = page * limit;

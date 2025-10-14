@@ -2,6 +2,7 @@ const express = require('express');
 const { asyncHandler } = require('../endpointHelper.js');
 const { DB, Role } = require('../database/database.js');
 const { authRouter, setAuth } = require('./authRouter.js');
+const {StatusCodeError} = require("../endpointHelper");
 
 const userRouter = express.Router();
 
@@ -46,7 +47,11 @@ userRouter.get(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    res.json(await DB.getUsers(req.user));
+    if (!req.user.isRole(Role.Admin)) {
+      throw new StatusCodeError('unable to list users', 403);
+    }
+
+    res.json(await DB.getUsers());
   })
 );
 
