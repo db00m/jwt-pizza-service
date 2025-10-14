@@ -23,7 +23,7 @@ test('list users admin', async () => {
     .get('/api/user')
     .set('Authorization', `Bearer ${adminAuthToken}`);
   expect(listUsersRes.status).toBe(200);
-  const users = listUsersRes.body[0];
+  const users = listUsersRes.body.users;
   expect(users).toEqual(expect.arrayContaining([
     expect.objectContaining({
       id: expect.any(Number),
