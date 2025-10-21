@@ -133,7 +133,7 @@ class DB {
       await this.query(connection, 'DELETE FROM userRole WHERE userId=?', [userId]);
       await this.query(connection, 'DELETE FROM user WHERE id=?', [userId]);
       await connection.commit();
-    } catch(e) {
+    } catch {
       await connection.rollback();
       throw new StatusCodeError('unable to delete user', 500);
     } finally {
