@@ -15,6 +15,29 @@ function requestTracker(req, res, next) {
 }
 
 // Active user metric
+const activeUsers = new Map();
+const ACTIVE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+function markUserActive(userId) {
+  if (activeUsers.has(userId)) {
+    clearTimeout(activeUsers.get(userId));
+  }
+  const timer = setTimeout(() => activeUsers.delete(userId), ACTIVE_WINDOW_MS);
+  activeUsers.set(userId, timer);
+}
+
+function trackLogin(req, res, next) {
+  let user = req.user;
+  if (user) {
+    markUserActive(user.id);
+  }
+
+  next();
+}
+
+function getActiveUserCount() {
+  return activeUsers.size;
+}
 // Authentication Attempts
 function authenticationTracker(authStatus) {
   authAttempts[authStatus] = (authAttempts[authStatus] || 0) + 1
@@ -29,15 +52,53 @@ function getMemoryUsagePercentage() {
   const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
 
-  console.log(`Total Mem: ${totalMemory / (1024 ** 3)}G`);
-  console.log(`Memory Available: ${freeMemory / (1024 ** 3)}G`);
-
   const usedMemory = totalMemory - freeMemory;
   const memoryUsage = (usedMemory / totalMemory) * 100;
   return memoryUsage.toFixed(2);
 }
 // Pizzas Sold
+
+let revenue = 0;
+let pizzaSales = 0;
+let pizzaFails = 0;
+
+function trackOrder(order, status) {
+  if (status === "success") {
+    order.items.forEach((item) => {
+      pizzaSales++;
+      revenue += item.price;
+    });
+  } else if (status === "failure") {
+    pizzaFails += order.items.length;
+  }
+}
+
 // Latency
+const latencies = [];
+
+function latencyTracker(req, res, next) {
+  const start = process.hrtime.bigint(); // high-resolution time
+
+  res.on('finish', () => {
+    const end = process.hrtime.bigint();
+    const durationMs = Number(end - start) / 1_000_000; // convert to ms
+    latencies.push(durationMs);
+  });
+
+  next();
+}
+
+function getAverageLatency(latenciesArray) {
+  if (latenciesArray.length === 0) return 0;
+  const sum = latenciesArray.reduce((a, b) => a + b, 0);
+  return sum / latenciesArray.length;
+}
+
+const pizzaLatency = [];
+
+function pizzaLatencyTracker(latency) {
+  pizzaLatency.push(latency);
+}
 
 // Build OTel request body
 
@@ -50,9 +111,17 @@ setInterval(() => {
     metrics.push(createMetric('authentications', authAttempts[status], '1', 'sum', 'asInt', { status }));
   });
   metrics.push(createMetric('cpu', getCpuUsagePercentage(), '%', 'gauge', 'asDouble', { }));
-  metrics.push(createMetric('memoryUsage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', { }))
+  metrics.push(createMetric('memoryUsage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', { }));
+  metrics.push(createMetric('activeUsers', getActiveUserCount(), '1', 'gauge', 'asInt', { }));
+  metrics.push(createMetric('requestLatency', getAverageLatency(latencies), 'ms', 'gauge', 'asDouble', {}));
+  metrics.push(createMetric('pizzaLatency', getAverageLatency(pizzaLatency), 'ms', 'gauge', 'asDouble', {}));
+  metrics.push(createMetric('pizzasSold', pizzaSales, '1', 'sum', 'asInt', { saleStatus: "success" })); // We could track this by franchise in the future
+  metrics.push(createMetric('pizzasSold', pizzaFails, '1', 'sum', 'asInt', { saleStatus: "fail" })); // We could track this by franchise in the future
+  metrics.push(createMetric('revenue', revenue, '1', 'sum', 'asDouble', {}));
 
   sendMetricToGrafana(metrics);
+  latencies.length = 0;
+  pizzaLatency.length = 0;
 }, 10000);
 
 function createMetric(metricName, metricValue, metricUnit, metricType, valueType, attributes) {
@@ -116,4 +185,12 @@ function sendMetricToGrafana(metrics) {
 }
 // Send metrics to Grafana periodically
 
-module.exports = { requestTracker, authenticationTracker };
+module.exports = {
+  requestTracker,
+  authenticationTracker,
+  markUserActive,
+  trackLogin,
+  latencyTracker,
+  pizzaLatencyTracker,
+  trackOrder,
+};

@@ -4,4 +4,5 @@
 .idea
 config.js
 coverage
+generateTrafic.sh
 dist
