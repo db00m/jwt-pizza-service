@@ -9,6 +9,7 @@ const metrics = require('./metrics.js');
 
 const app = express();
 app.use(express.json());
+app.use(metrics.requestTracker);
 app.use(setAuthUser);
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -17,7 +18,6 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
-app.use(metrics.requestTracker);
 app.use(metrics.latencyTracker);
 app.use(metrics.trackLogin);
 
