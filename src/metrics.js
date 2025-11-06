@@ -1,4 +1,5 @@
 const config = require('./config');
+const os = require('os');
 
 // Create data structures to hold metrics
 const requests = {};
@@ -19,6 +20,22 @@ function authenticationTracker(authStatus) {
   authAttempts[authStatus] = (authAttempts[authStatus] || 0) + 1
 }
 // CPU and Memory
+function getCpuUsagePercentage() {
+  const cpuUsage = os.loadavg()[0] / os.cpus().length;
+  return cpuUsage.toFixed(2) * 100;
+}
+
+function getMemoryUsagePercentage() {
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+
+  console.log(`Total Mem: ${totalMemory / (1024 ** 3)}G`);
+  console.log(`Memory Available: ${freeMemory / (1024 ** 3)}G`);
+
+  const usedMemory = totalMemory - freeMemory;
+  const memoryUsage = (usedMemory / totalMemory) * 100;
+  return memoryUsage.toFixed(2);
+}
 // Pizzas Sold
 // Latency
 
@@ -32,6 +49,8 @@ setInterval(() => {
   Object.keys(authAttempts).forEach((status) => {
     metrics.push(createMetric('authentications', authAttempts[status], '1', 'sum', 'asInt', { status }));
   });
+  metrics.push(createMetric('cpu', getCpuUsagePercentage(), '%', 'gauge', 'asDouble', { }));
+  metrics.push(createMetric('memoryUsage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', { }))
 
   sendMetricToGrafana(metrics);
 }, 10000);
