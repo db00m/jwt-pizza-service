@@ -87,7 +87,7 @@ jobs:
           sed -i "s/tempdbpassword/${{ secrets.DB_PASSWORD }}/g" dist/config.js
           sed -i "s/127.0.0.1/${{ secrets.DB_HOSTNAME }}/g" dist/config.js
           sed -i "s/METRICS_URL/${{ secrets.METRICS_URL }}/g" dist/config.js
-          sed -i "s/METRICS_API_KEY/${{ secrets.METRICS_API_KEY }}
+          sed -i "s/METRICS_API_KEY/${{ secrets.METRICS_API_KEY }}/g" dist/config.js
 
       - name: Update distribution artifact
         uses: actions/upload-artifact@v4
