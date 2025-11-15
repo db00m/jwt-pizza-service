@@ -127,7 +127,6 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: 'jwt-pizza-service'
         run: |
-          sed it "s/test/
           sed -i "s/root/${{ secrets.DB_USERNAME }}/g" dist/config.js
           sed -i "s/tempdbpassword/${{ secrets.DB_PASSWORD }}/g" dist/config.js
           sed -i "s/127.0.0.1/${{ secrets.DB_HOSTNAME }}/g" dist/config.js
