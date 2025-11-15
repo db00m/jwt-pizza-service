@@ -58,6 +58,12 @@ jobs:
               source: 'jwt-pizza-service',
               url: '${{ secrets.METRICS_URL }}',
               apiKey: '${{ secrets.METRICS_API_KEY }}'
+            },
+            logging: {
+              source: 'jwt-pizza-service',
+              url: '${{ secrets.LOGGING_URL }}',
+              userId: ${{ secrets.GRAFANA_USER_ID }},
+              apiKey: '${{ secrets.LOGGING_API_KEY }}'
             }
           };" > src/config.js
 
