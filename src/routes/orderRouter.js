@@ -94,11 +94,11 @@ orderRouter.post(
     metrics.pizzaLatencyTracker(latencyMs);
     const j = await r.json();
     if (r.ok) {
-      logger.log("info", "factory", { req, res: r })
+      logger.log("info", "factory", { req: req.body, res: r.body })
       metrics.trackOrder(orderReq, "success");
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
     } else {
-      logger.log("error", "factory", { req, res: r })
+      logger.log("error", "factory", { req: req.body, res: r.body })
       metrics.trackOrder(orderReq, "failure");
       res.status(500).send({ message: 'Failed to fulfill order at factory', followLinkToEndChaos: j.reportUrl });
     }
